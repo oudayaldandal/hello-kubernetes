@@ -1,4 +1,4 @@
-name: CI-CD
+name: Build and Push Docker Image
 
 
 on:
@@ -11,59 +11,44 @@ jobs:
 
   build:
 
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
 
     steps:
 
-      - name: Checkout
+      # Télécharger le code
+      - name: Checkout code
         uses: actions/checkout@v4
 
 
-      - name: Setup Java
+      # Installer Java
+      - name: Set up Java
         uses: actions/setup-java@v4
         with:
           java-version: '21'
-          distribution: temurin
+          distribution: 'temurin'
 
 
+      # Compiler Spring Boot
       - name: Build Spring Boot
         run: mvn clean package
 
 
-
-      - name: Docker Login
+      # Connexion Docker Hub
+      - name: Login Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
 
-
+      # Construire image Docker
       - name: Build Docker Image
         run: |
-          docker build -t uday224/hello-kubernetes:latest .
+          docker build -t uday224/hello-kubernetes:v1 .
+      
 
-
-
+      # Envoyer image
       - name: Push Docker Image
         run: |
-          docker push uday224/hello-kubernetes:latest
-
-
-
-      - name: Install kubectl
-        uses: azure/setup-kubectl@v4
-
-
-
-      - name: Configure Kubernetes
-        run: |
-          mkdir ~/.kube
-          echo "${{ secrets.KUBE_CONFIG }}" > ~/.kube/config
-
-
-
-      - name: Deploy Kubernetes
-        run: |
-          kubectl apply -f kubernetes/
+          docker push uday224/hello-kubernetes:v1
